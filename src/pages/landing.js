@@ -22,7 +22,10 @@ export default function LandingPage({ navigation }) {
         uri="https://svgur.com/i/vbS.svg"
       />
 
-      <Button title="Get started" onPress={() => navigation.navigate("Home")} />
+      <Button
+        title="Get started"
+        onPress={() => navigation.navigate("Input")}
+      />
     </View>
   );
 }
@@ -36,7 +39,7 @@ const styles = StyleSheet.create({
   },
   h1: {
     color: "#F8F1FF",
-    fontSize: 50,
+    fontSize: 36,
     position: "absolute",
     zIndex: 2,
     top: vh * 0.1,

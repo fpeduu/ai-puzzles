@@ -23,7 +23,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     position: "absolute",
     zIndex: 2,
-    bottom: vh * 0.1,
+    top: vh * 0.9,
   },
   buttonText: {
     color: "#343434",
