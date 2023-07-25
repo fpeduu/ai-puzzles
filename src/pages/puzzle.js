@@ -18,7 +18,12 @@ export default function PuzzlePage({ route, navigation }) {
   const { input } = route.params;
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [directions, setDirections] = useState([0, 0, 0, 0]);
+  const [directions, setDirections] = useState([
+    Math.floor(Math.random() * 4),
+    Math.floor(Math.random() * 4),
+    Math.floor(Math.random() * 4),
+    Math.floor(Math.random() * 4),
+  ]);
 
   const rotateImage = async (imgIndex) => {
     const image = images[imgIndex];
@@ -29,12 +34,10 @@ export default function PuzzlePage({ route, navigation }) {
       newDirection,
       ...directions.slice(imgIndex + 1),
     ]);
+
     const manipResult = await ImgManipulator.manipulateAsync(
       image.localUri || image.uri,
-      [
-        { rotate: newDirection * 90 },
-        { flip: ImgManipulator.FlipType.Vertical },
-      ],
+      [{ rotate: 90 }],
       { compress: 1, format: ImgManipulator.SaveFormat.PNG }
     );
     setImages([
@@ -56,6 +59,7 @@ export default function PuzzlePage({ route, navigation }) {
         {
           crop: { originX: 0, originY: 0, width: size, height: size },
         },
+        { rotate: directions[0] * 90 },
       ],
       { compress: 1, format: ImgManipulator.SaveFormat.JPEG }
     );
@@ -71,6 +75,7 @@ export default function PuzzlePage({ route, navigation }) {
             height: size,
           },
         },
+        { rotate: directions[1] * 90 },
       ],
       { compress: 1, format: ImgManipulator.SaveFormat.JPEG }
     );
@@ -86,6 +91,7 @@ export default function PuzzlePage({ route, navigation }) {
             height: size,
           },
         },
+        { rotate: directions[2] * 90 },
       ],
       { compress: 1, format: ImgManipulator.SaveFormat.JPEG }
     );
@@ -101,6 +107,7 @@ export default function PuzzlePage({ route, navigation }) {
             height: size,
           },
         },
+        { rotate: directions[3] * 90 },
       ],
       { compress: 1, format: ImgManipulator.SaveFormat.JPEG }
     );
@@ -114,6 +121,16 @@ export default function PuzzlePage({ route, navigation }) {
     cropImageInto4Parts();
   }, []);
 
+  useEffect(() => {
+    if (
+      directions[0] == 0 &&
+      directions[1] == 0 &&
+      directions[2] == 0 &&
+      directions[3] == 0
+    )
+      alert("Congratulations, You've finished your first puzzle!");
+  }, [directions]);
+
   return (
     <View style={styles.container}>
       {loading ? (
@@ -124,6 +141,7 @@ export default function PuzzlePage({ route, navigation }) {
 
           {images.map((img, i) => (
             <Pressable
+              key={i}
               onPress={() => rotateImage(i)}
               style={{ ...styles.img, ...styles[`part${i + 1}`] }}
             >
