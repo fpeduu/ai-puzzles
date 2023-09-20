@@ -29,7 +29,7 @@ class _InputPageState extends State<InputPage> {
             Positioned(
               top: vh * 0.1,
               child: Text(
-                'Send your first input!',
+                'Send your input!',
                 style: TextStyle(color: Color(0xFFF8F1FF), fontSize: 36),
               ),
             ),

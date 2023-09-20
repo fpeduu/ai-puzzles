@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
+import 'package:http/http.dart' as http;
 import 'dart:convert';
-// import 'package:http/http.dart' as http;
 
 class PuzzlePage extends StatefulWidget {
   final String input;
-  PuzzlePage({required this.input});
+  PuzzlePage({Key? key, required this.input}) : super(key: key);
+
+  static PuzzlePage fromRoute(RouteSettings settings) {
+    final Map<String, dynamic> args = settings.arguments as Map<String, dynamic>;
+    final String input = args['input'] as String;
+    return PuzzlePage(input: input);
+  }
 
   @override
   _PuzzlePageState createState() => _PuzzlePageState();
@@ -16,11 +22,78 @@ class _PuzzlePageState extends State<PuzzlePage> {
   // List<Image> images = [];
   // bool isLoading = false;
   List<int> directions = List.generate(9, (index) => Random().nextInt(4));
+  String? imageUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchImage();
+  }
+
+  Future<void> fetchImage() async {
+    const apiKey = "eBpl35wn6SwTuKF9X1M3RT7fVy1R1uaxVN2T3aPaPlJOV3h89EZLYVAzJF5O";
+    const url = "https://stablediffusionapi.com/api/v3/text2img";
+
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: <String, String>{
+          'Content-Type': 'application/json'
+        },
+        body: jsonEncode({
+          'key': apiKey,
+          'prompt': widget.input,
+          'width': 512,
+          'height': 512
+        })
+      );
+
+      if (response.statusCode == 200) {
+        final jsonResponse = json.decode(response.body);
+        setState(() {
+          imageUrl = jsonResponse['output'][0].replaceAll('\\', '');
+        });
+      } else {
+        print('Request failed with status: ${response.statusCode}');
+      }
+    } catch (error) {
+      print('Error: $error');
+    }
+  }
 
   void rotateImage(int imgIndex) {
     setState(() {
       directions[imgIndex] = (directions[imgIndex] + 1) % 4;
+      if (isPuzzleCompleted()) {
+        // Delay the execution by 1 second
+        Future.delayed(Duration(seconds: 2), () {
+          // Show a dialog to inform the user that they've completed the puzzle
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: Text("Congratulations!"),
+              content: Text("You've completed the puzzle!"),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);  // Close the AlertDialog
+                    Navigator.pop(context);  // Navigate back to the initial page
+                  },
+                  child: Text("Close"),
+                ),
+              ],
+            ),
+          );
+        });
+      }
     });
+  }
+
+
+
+
+  bool isPuzzleCompleted() {
+    return directions.every((direction) => direction == 0);
   }
 
   @override
@@ -62,29 +135,21 @@ class _PuzzlePageState extends State<PuzzlePage> {
                       quarterTurns: directions[index],
                       child: Stack(
                         children: [
-                          Positioned(
-                            left: -x * (MediaQuery.of(context).size.width / 3),
-                            top: -y * (MediaQuery.of(context).size.width / 3),
-                            child: Image.asset(
-                              'lib/assets/prompt-result.png',
-                              width: MediaQuery.of(context).size.width,
-                              height: MediaQuery.of(context).size.width,
-                              fit: BoxFit.cover
-                            ),
-                          )
+                          if (imageUrl != null)
+                            Positioned(
+                              left: -x * (MediaQuery.of(context).size.width / 3),
+                              top: -y * (MediaQuery.of(context).size.width / 3),
+                              child: Image.network(
+                                imageUrl!,
+                                width: MediaQuery.of(context).size.width,
+                                height: MediaQuery.of(context).size.width,
+                                fit: BoxFit.cover,
+                              ),
+                            )
+                          else
+                            if (index == 4) Center(child: CircularProgressIndicator()),
                         ],
                       ),
-                      // child: ClipPath(
-                      //   clipper: ImagePieceClipper(x, y),
-                      //   child: Transform.translate(
-                      //       offset: Offset(-x * (MediaQuery.of(context).size.width / 3),
-                      //                       -y * (MediaQuery.of(context).size.width / 3)),
-                      //     child: Image.asset('lib/assets/prompt-result.png',
-                      //         width: MediaQuery.of(context).size.width / 3,
-                      //         height: MediaQuery.of(context).size.width / 3,
-                      //         fit: BoxFit.cover),
-                      //   ),
-                      // ),
                     ),
                   );
                 },
@@ -112,12 +177,4 @@ class ImagePieceClipper extends CustomClipper<Path> {
   }
   @override
   bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
-}
-
-void main() {
-  runApp(
-    MaterialApp(
-      home: PuzzlePage(input: "Pikachu landing on Mars"),
-    ),
-  );
 }
